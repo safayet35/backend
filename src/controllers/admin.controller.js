@@ -69,4 +69,23 @@ const logout = asyncHandler(async (req, res) => {
 		.json(new ApiResponse(200, "Logout successfully"));
 });
 
-export { login, logout };
+const changePassword = asyncHandler(async (req, res) => {
+	const { oldPass, newPass } = req.body;
+	const userId = req.user._id;
+	if (!oldPass || !newPass) {
+		throw new ApiError(400, "All fileds are required");
+	}
+	const user = await Admin.findById(userId);
+
+	const isCorrectPass = await user.isCorrectPassword(oldPass);
+
+	if (!isCorrectPass) {
+		throw new ApiError(401, "Invalid password");
+	}
+
+	user.password = newPass;
+	await user.save();
+	res.status(200).json(new ApiResponse(200,"Password changed successfully"))
+});
+
+export { login, logout, changePassword };
