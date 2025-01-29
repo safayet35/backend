@@ -49,8 +49,24 @@ const login = asyncHandler(async (req, res) => {
 		.json(new ApiResponse(200, filterUser, "Login successfully"));
 });
 
+const logout = asyncHandler(async (req, res) => {
+	const userId = req.user;
+	console.log(userId);
+	const user = await Admin.findByIdAndUpdate(
+		userId,
+		{
+			$set: {
+				refreshToken: ""
+			}
+		},
+		{ new: true }
+	);
 
+	res
+		.status(200)
+		.clearCookie("accessToken")
+		.clearCookie("refreshToken")
+		.json(new ApiResponse(200, "Logout successfully"));
+});
 
-
-
-export { login };
+export { login, logout };
