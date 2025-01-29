@@ -2,7 +2,9 @@ import Admin from "../models/admin.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
-
+import {
+	uploadOnCloudinary
+} from "../utils/cloudinary.js";
 const generateAccessAndRefreshToken = async userId => {
 	try {
 		const user = await Admin.findById(userId);
@@ -85,7 +87,35 @@ const changePassword = asyncHandler(async (req, res) => {
 
 	user.password = newPass;
 	await user.save();
-	res.status(200).json(new ApiResponse(200,"Password changed successfully"))
+	res.status(200).json(new ApiResponse(200, "Password changed successfully"));
 });
 
-export { login, logout, changePassword };
+const uploadProfileImage = asyncHandler(async (req, res) => {
+	const imageLocalPath = req.file.path;
+
+	if (!imageLocalPath) {
+		throw new ApiError(400, "Image is required ");
+	}
+	const response = await uploadOnCloudinary(imageLocalPath);
+
+	if (!response?.url) {
+		throw new ApiError(401, "Invalid file ");
+	}
+
+	const userId = req.user._id;
+
+	const newUser = await Admin.findByIdAndUpdate(
+		userId,
+		{
+			$set: {
+				profileImage: response.url
+			}
+		},
+		{ new: true }
+	);
+	res.send(newUser);
+});
+
+
+
+export { login, logout, changePassword, uploadProfileImage };
